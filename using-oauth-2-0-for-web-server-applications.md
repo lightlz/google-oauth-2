@@ -9,7 +9,7 @@
 
 ## 概览
 
-授权程序会在你的应用程序将一个浏览器重定向到一个谷歌 URL；[一个包含查询参数的 URL]https://developers.google.com/identity/protocols/OAuth2WebServer#formingtheurl) 显示出正在请求的访问类型。和其他情形一样，谷歌会处理用户认证，会话选择，用户准许（User consent）。这一程序的结果是授权码，谷歌会将授权码以查询串的形式返回给您的应用程序。
+授权程序会在你的应用程序将一个浏览器重定向到一个谷歌 URL；[一个包含查询参数的 URL](https://developers.google.com/identity/protocols/OAuth2WebServer#formingtheurl) 显示出正在请求的访问类型。和其他情形一样，谷歌会处理用户认证，会话选择，用户准许（User consent）。这一程序的结果是授权码，谷歌会将授权码以查询串的形式返回给您的应用程序。
 
 接收到授权码之后，你的应用程序可以通过[密码交换](https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse) （同时也会进行客户端 ID 和客户端 secret 交换）来获得访问令牌,在某种情形下还会得到一个刷新令牌。
 
@@ -19,7 +19,7 @@
 
 ## 生成 URL
 
-用于认证用户的 URL 是 https://accounts.google.com/o/oauth2/auth 。这个端点只能通过 SSL 访问，HTTP 连接会被拒绝。
+用于认证用户的 URL 是 [https://accounts.google.com/o/oauth2/auth](https://accounts.google.com/o/oauth2/auth) 。这个端点只能通过 SSL 访问，HTTP 连接会被拒绝。
 
 ----------
 
@@ -44,7 +44,7 @@
 
 
 **参数：**	redirect_uri （重定向 URI）  
-**值：**	在[开发者控制台](https://console.developers.google.com/)里列出的这个工程的 redirect_urivalues 其中一个值。  
+**值：**	 在[开发者控制台](https://console.developers.google.com/)里列出的这个工程的 redirect_urivalues 其中一个值。  
 **描述：**	决定回应(Response)会发向哪里。这个参数的值必须和[谷歌开发者控制台](https://console.developers.google.com/)为这个工程所显示的值的其中一个完全一致（包括完整的 HTTP 或 HTTPS 格式、大小写、和末尾的'/'符号）。
  
  
@@ -105,7 +105,7 @@
 
 > **重要信息**: 如果您接收回应的端点会渲染 HTML 页面，那么页面的所有资源都可以看见 URL 中的认证码。其中脚本能直接读取 URL，页面上任何资源都可能收到带有认证码的 URL 的 **Referer** HTTP头。请认真考虑您是否真的想发送认证凭证给那个页面上的所有资源（特别是第三方脚本，例如社交网络插件和统计分析插件）。若想避免这个问题，我们推荐让服务器先单独处理请求，然后再重定向到另外一个不包含回应参数的 URL。
 
-服务器收到认证码后，它就能用认证码来交换一个访问令牌和一个刷新令牌。这种请求实际上是将一个 HTTPS POST 发送到 URL：https://www.googleapis.com/oauth2/v3/token，其中包含以下参数:
+服务器收到认证码后，它就能用认证码来交换一个访问令牌和一个刷新令牌。这种请求实际上是将一个 HTTPS POST 发送到 URL：https://www.googleapis.com/oauth2/v3/token ，其中包含以下参数:
 
 
 ----------
@@ -172,7 +172,7 @@
 
 ## 调用谷歌 API
 
-您的程序获得访问令牌之后，您可以使用令牌以用户或者服务账户的名义来对谷歌 API 进行调用。为了做到这一点，请将访问令牌包含到发给 API 的请求中，可以通过包含 access_token 查询参数或者一个 Authorization: Bearer HTTP 头来实现。如果可能的话，我们更欢迎 HTTP 头的方法，因为查询串更容易在服务器记录中可见。在大多数情况下你可以使用客户端库来设置您的谷歌 API 调用（例如，当对[谷歌人脉 API 进行调用时](https://developers.google.com/+/api/latest/people/get#examples))）。
+您的程序获得访问令牌之后，您可以使用令牌以用户或者服务账户的名义来对谷歌 API 进行调用。为了做到这一点，请将访问令牌包含到发给 API 的请求中，可以通过包含 access_token 查询参数或者一个 Authorization: Bearer HTTP 头来实现。如果可能的话，我们更欢迎 HTTP 头的方法，因为查询串更容易在服务器记录中可见。在大多数情况下你可以使用客户端库来设置您的谷歌 API 调用（例如，当对[谷歌人脉 API 进行调用时](https://developers.google.com/+/api/latest/people/get#examples)）。
 
 你可以在[OAuth 2.0 游乐场](https://developers.google.com/oauthplayground/)中自行尝试所有的谷歌 API 并查看他们所对应的域。
 
