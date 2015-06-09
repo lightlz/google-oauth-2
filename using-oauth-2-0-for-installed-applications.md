@@ -1,23 +1,34 @@
-# 在 Web 服务器应用程序上使用 OAuth 2.0
+# 在本地安装的应用程序上使用 OAuth 2.0
 
-谷歌 OAuth 2.0 端点支持使用下列语言和框架编写的web 服务器应用程序：PHP，Java，Python，Ruby，和 ASP.NET。
-这些应用程序可能会在用户使用的时候或用户没在使用的时候访问谷歌 API 。这种工作流需要应用程序有能力保存一个 secret。
+谷歌 OAuth 2.0 端点支持各种平台上的应用程序，例如计算机、移动电话、平板等。本地安装的应用程序会被分发到每个独立的机器上，而且通常被认为不能用于保存 secret。这些应用程序可以在用户值守时，或者在后台运行时访问谷歌 API。
 
-这个文档描述了如何从 web 服务器应用程序使用 OAuth 2.0 访问谷歌 API。 
+如果您满足下述条件，那么这个文档就是为您准备的：
+
+- 您正在编写一个本地安装的应用程序，且该程序的平台不是 Android 或 iOS，同时
+- 您的本地安装的应用程序会运行在拥有良好输入性能并且系统具有浏览器的设备上，例如拥有全键盘的设备。
+
+如果你正在 Android 或 iOS 编写应用程序，请使用[谷歌登陆](https://developers.google.com/identity/sign-in/)来认证您的用户。谷歌登陆按钮会管理 OAuth 2.0 工作流，包括认证和获取谷歌 API 授权。所有有谷歌账户的人都能用谷歌登陆，不论他们有没有升级到谷歌+。若要添加谷歌登陆按钮，请根据平台分别参照 [Android](https://developers.google.com/identity/sign-in/android/) 或 [iOS](https://developers.google.com/identity/sign-in/ios/) 或[网站](https://developers.google.com/identity/sign-in/web/)。
+
+如果您的应用程序运行在没有浏览器的设备上，或者输入性能受限（例如运行在家用游戏机、视频摄录机、打印机上的应用程序），那么请参照[在设备上使用 OAuth 2.0](https://developers.google.com/identity/protocols/OAuth2ForDevices)。
 
 ## 概览
 
-授权程序会在你的应用程序将一个浏览器重定向到一个谷歌 URL；[一个包含查询参数的 URL](https://developers.google.com/identity/protocols/OAuth2WebServer#formingtheurl) 显示出正在请求的访问类型。和其他情形一样，谷歌会处理用户认证，会话选择，用户准许（User consent）。这一程序的结果是授权码，谷歌会将授权码以查询串的形式返回给您的应用程序。
+在这个工作流中，在本地安装的应用程序必须能使用浏览器，或者有嵌入式浏览器作为 web 视图。在本地安装的应用程序上的 OAuth 2.0 工作流如下：
 
-接收到授权码之后，你的应用程序可以通过[密码交换](https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse) （同时也会进行客户端 ID 和客户端 secret 交换）来获得访问令牌,在某种情形下还会得到一个刷新令牌。
+1. 您的应用程序将浏览器重定向到一个谷歌 URL。URL 查询参数会指出应用程序所需要的谷歌 API 访问权限。
+2. 和其他方案一样，谷歌会负责用户认证和用户准许（User consent），这一系列程序的结果是一个授权码。授权码会返回到浏览器的标题栏上或者作为一个查询串参数被返回，这取决于您的应用程序在请求中所发送的参数。
+3. 您的应用程序会进行授权码交换来获得访问令牌和刷新令牌。在交换过程中，应用程序会提交他的客户端 ID 和客户端 secret（这两者都是从开发者控制台获得的）。
+4. 您的应用程序会使用访问令牌来对谷歌 API 进行调用，应用程序也会储存刷新令牌以供未来使用。
 
-应用程序可以使用访问令牌来[访问谷歌 API](https://developers.google.com/identity/protocols/OAuth2WebServer#callinganapi)。
+这个工作流和[在 Web 服务器应用程序上使用 OAuth 2.0](https://developers.google.com/identity/protocols/OAuth2WebServer)的工作流比较类似，但有以下三点不同：
 
-如果一个刷新令牌在授权码交换时存在，那么它可以在任何时候用来获取新的访问令牌。这叫做[离线访问](https://developers.google.com/identity/protocols/OAuth2WebServer#offline)，因为应用程序用这种方法取得新的访问令牌时不需要用户值守浏览器。
+- 当创建一个客户端 ID时，你需要指明您的应用程序是一个在本地安装的应用程序。这会影响 redirect_uri 参数的值的结果。
+- 从开发者控制台获取的客户端 ID 和客户端 secret 是嵌入在您的应用程序源代码内的。在这种情况下，客户端 secret 显然没被当做秘密看待。 
+- 授权码可以通过浏览器的标题栏，或者 http://localhost 端口的查询串来返回到您的应用程序。
 
-## 生成 URL
+## 为认证请求生成 URL
 
-用于认证用户的 URL 是 [https://accounts.google.com/o/oauth2/auth](https://accounts.google.com/o/oauth2/auth) 。这个端点只能通过 SSL 访问，HTTP 连接会被拒绝。
+用于认证用户的 URL 是 [https://accounts.google.com/o/oauth2/auth](https://accounts.google.com/o/oauth2/auth) 。这个端点只能通过 SSL 访问，HTTP（非-SSL）连接会被拒绝。
 
 ----------
 
@@ -26,14 +37,13 @@
 
 ----------
 
-
-对于 web 服务器应用程序，谷歌认证服务器支持的查询串参数集为：
+对于在本地安装的应用程序，谷歌认证服务器支持的查询串参数集为：
 
 ----------
 
 **参数：**	response_type （响应类型）  
 **值：**	 code （密码）  
-**描述：**	决定 Google OAuth 2.0 端点是否要返回授权码。 对于 web 服务器应用程序，参数应该使用 code。
+**描述：**	决定 Google OAuth 2.0 端点是否要返回授权码。 对于在本地安装的应用程序，参数应该使用 code。
 
 
 **参数：**	client_id （客户端 ID）  
@@ -43,7 +53,7 @@
 
 **参数：**	redirect_uri （重定向 URI）  
 **值：**	 在[开发者控制台](https://console.developers.google.com/)里列出的这个工程的 redirect_urivalues 其中一个值。  
-**描述：**	决定回应(Response)会发向哪里。这个参数的值必须和[谷歌开发者控制台](https://console.developers.google.com/)为这个工程所显示的值的其中一个完全一致（包括完整的 HTTP 或 HTTPS 格式、大小写、和末尾的'/'符号）。
+**描述：**	决定回应(Response)会发向哪里。这个参数的值必须和[谷歌开发者控制台](https://console.developers.google.com/)为这个工程所显示的值的其中一个完全一致（包括完整的 HTTP 或 HTTPS 格式、大小写、和末尾的'/'符号）。您能使用 urn:ietf:wg:oauth:2.0:oob, urn:ietf:wg:oauth:2.0:oob:auto, 或者一个 http://localhost 端口。更多详情，请参照[选择一个重定向 URI](https://developers.google.com/identity/protocols/OAuth2InstalledApp#choosingredirecturi)。
  
  
 **参数：**	scope （域）   
@@ -54,16 +64,6 @@
 **参数：**	state （状态）  
 **值：**	任意字符串  
 **描述：**	当收到回应时提供任何可能对您的应用程序有用的状态。谷歌认证服务器会回传这个参数，所以您的应用程序会收到和它发出去一样的内容。若想防止跨站请求伪造攻击([CSRF](http://en.wikipedia.org/wiki/Cross-site_request_forgery)), 我们强烈推荐您在状态中包含防伪造令牌，并且在回应中进行确认。详情请参见[OpenID 连接](https://developers.google.com/identity/protocols/OpenIDConnect#createxsrftoken) 来获得实现这个功能的示例。
- 
- 
-**参数：**	access_type （访问类型）  
-**值：**	online 或 offline（在线或离线）  
-**描述：**	表示当用户不在浏览器前时，您的应用程序是否需要访问谷歌 API。这个参数默认值是 online。如果您的应用程序需要在用户不在浏览器前的时候刷新访问令牌，那么请使用 offline，这样做会让您的应用程序在第一次为用户获取授权码的时候获得一个刷新令牌。
- 
- 
-**参数：**	approval_prompt （准许提示）  
-**值：**	force 或 auto （强制或自动）  
-**描述：**	决定用户是否应该再次进行用户准许。默认值是 auto（自动），表示用户只需要在第一次权限请求的时候看见用户许可页面。如果这个值是 force（强制），那么用户即使以前许可了您的应用程序的相关权限，也会再次见到用户许可页面。
  
  
 **参数：**	login_hint （登陆提示）  
@@ -77,96 +77,125 @@
 
 ----------
 
+### 示例 URL
 
-下面是一串示例 URL。（包含换行和空格来加强可读性）
+下面是一个示例 URL，包含换行和空格来加强可读性：
 
 	https://accounts.google.com/o/oauth2/auth?
-	 scope=email%20profile&
-	 state=security_token%3D138r5719ru3e1%26url%3Dhttps://oa2cb.example.com/myHome&
-	 redirect_uri=https%3A%2F%2Foauth2-login-demo.appspot.com%2Fcode&,
-	 response_type=code&
-	 client_id=812741506391.apps.googleusercontent.com&
-	 approval_prompt=force
+	  scope=email%20profile&
+	  redirect_uri=urn:ietf:wg:oauth:2.0:oob&
+	  response_type=code&
+	  client_id=812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com
 
-	
-## 处理回应
+如果用户通过类似上述的 URL 进行登陆并且批准了访问权限，那么其结果会是类似下面这样的对话框：
+![Image](https://developers.google.com/accounts/images/installedresult.png)
 
-回应会被发送到请求 URL 中 redirect_uri 所指定的目的地。如果用户准许访问请求，那么回应会包含授权码和状态参数（如果请求中有包含状态参数的话）。如果用户没有准许该次请求，那么回应会包含一个错误信息。所有回应都会发送到查询串中的 web 服务器，如下例所示：
 
-一个包含错误的回应:
+下面是另外一个示例 URL，包含换行和空格来加强可读性：
 
-    https://oauth2-login-demo.appspot.com/code?error=access_denied&state=security_token%3D138r5719ru3e1%26url%3Dhttps://oa2cb.example.com/myHome
+	https://accounts.google.com/o/oauth2/auth?
+	  scope=email%20profile&
+	  redirect_uri=http://localhost:9004&
+	  response_type=code&
+	  client_id=812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com
 
-一个授权码回应:
+这两个 URL 的区别只有 redirect_uri 参数的值。第一个会让回应通过页面的标题返回授权码，而第二个则会使授权码作为查询串的一部分返回到http://localhost 地址。
 
-    https://oauth2-login-demo.appspot.com/code?state=security_token%3D138r5719ru3e1%26url%3Dhttps://oa2cb.example.com/myHome&code=4/P7q7W91a-oMsCeLvIaQm6bTrgtp7
+### 选择一个重定向 URI
 
-> **重要信息**: 如果您接收回应的端点会渲染 HTML 页面，那么页面的所有资源都可以看见 URL 中的授权码。其中脚本能直接读取 URL，页面上任何资源都可能收到带有授权码的 URL 的 **Referer** HTTP头。请认真考虑您是否真的想发送认证凭证给那个页面上的所有资源（特别是第三方脚本，例如社交网络插件和统计分析插件）。若想避免这个问题，我们推荐让服务器先单独处理请求，然后再重定向到另外一个不包含回应参数的 URL。
+当您在[谷歌开发者控制台](https://console.developers.google.com/)中创建一个客户端 ID时，控制台会为您创建两个 redirect_uri （重定向 URI）：
 
-服务器收到授权码后，它就能用授权码来交换一个访问令牌和一个刷新令牌。这种请求实际上是将一个 HTTPS POST 发送到 URL：https://www.googleapis.com/oauth2/v3/token ，其中包含以下参数:
+urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 
+您的应用程序所使用的参数值会决定授权码以何种方式传回。
+
+#### http://localhost
+
+这个参数值会告知谷歌认证服务器授权码应该以查询串参数的形式返回到客户端的 web 服务器上。您可以在不需要变更[谷歌开发者控制台](https://console.developers.google.com/)configuration的情况下指定端口号。如果要使用这个 URL 接收授权码，您的应用程序必须监听本地 web 服务器。这种方案在许多平台上可行，但不是所有平台都可行。如果您的平台支持这种方式，这是推荐的获取授权码的方式。
+
+> **注意**：在一些情况下，尽管可以进行监听，但其他软件（例如 Windows 防火墙）如果没有作出显著配置可能会对通讯照成影响。
+
+#### urn:ietf:wg:oauth:2.0:oob
+
+这个参数值会告知谷歌认证服务器应该用浏览器的标题栏将授权码返回到客户端，并且还带有一个文本页面提示用户将密码复制并粘贴到应用程序中（就像上面的截图一样）。这在当客户端（例如一个 Windows 应用程序）在系统不作出显著配置的前提下无法监听 HTTP 端口时十分有用。
+
+当您使用这个参数值，您的应用程序可以检测到页面已经载入，并且可以读取 HTML 页面的标题来获得授权码。接下来就要靠您的应用程序来关闭浏览器窗口了，如果您想确保用户永远都不会看见包含授权码的页面的话，其实现方式根据平台的不同而不同。
+
+如果您的目标平台不允许您检测页面是否已经载入，或者不允许您检测页面的标题，那么您可以要求用户手动将密码复制粘贴到您的应用程序内，就和页面本身的文字说明一样。
+
+#### urn:ietf:wg:oauth:2.0:oob:auto
+
+该参数和 urn:ietf:wg:oauth:2.0:oob 是一致的，但返回的确认页面不会有文字提示用户手动复制授权码，取而代之的是要求用户关闭浏览器窗口。
+
+在您的应用程序能读取 HTML 标题（例如，通过在桌面上检查窗口标题）获得授权码，但是却没法自动关闭页面的时候，这种方法就显得有用。
+
+## 处理回应并发出令牌请求
+
+初次认证请求的回应会包含一个授权码（密码），您的应用程序可以用授权码交换获得一个访问令牌和一个刷新令牌。
+
+若要发出这种令牌请求，您的应用程序应发送一个 HTTP POST 请求到 /oauth2/v3/token。并且包含以下参数：
 
 ----------
 
-**字段：**	code （密码）  
-**描述：**	从初次请求获得的授权码
-
-**字段：**	client_id （客户端 ID）  
+**字段：**	code
+**描述：**	初次认证请求返回的授权码
+ 
+**字段：**	client_id （客户端 ID）
 **描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 ID。
 
-**字段：**	client_secret （客户端 secret）  
-**描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 secret。
+**字段：**	client_secret （客户端 secret）
+**描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 secret。（对于注册为 Android，iOS 或 Chrome 应用程序的客户端而言，这是可选项。）
 
-**字段：**	redirect_uri （重定向 URI）  
-**描述：**	这个工程在[开发者控制台](https://console.developers.google.com/)处列出的重定向 URI 项之一。
+**字段：**	redirect_uri （重定向 URI）
+**描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的重定向 URI。
 
-**字段：**	grant_type （许可类型）  
+**字段：**	grant_type （许可类型）
 **描述：**	正如 OAuth 2.0 规格中定义的，这个字段必须包含 authorization_code 中的一个值。
- 
 
-----------
+ ----------
 
-
-实际请求可能会像下面这样：
+一个实际的请求应该类似下例：
 
 	POST /oauth2/v3/token HTTP/1.1
 	Host: www.googleapis.com
 	Content-Type: application/x-www-form-urlencoded
 
-	code=4/P7q7W91a-oMsCeLvIaQm6bTrgtp7&
+	code=4/v6xr77ewYqhvHSyW6UJ1w7jKwAzu&
 	client_id=8819981768.apps.googleusercontent.com&
-	client_secret={client_secret}&
+	client_secret=
+
+	your_client_secret&
 	redirect_uri=https://oauth2-login-demo.appspot.com/code&
 	grant_type=authorization_code
 
-一个针对这个请求的成功的回应应该包含以下字段：
-
-
+	
+一个针对上述请求的成功回应会包含下列字段：
 ----------
 
 **字段：**	access_token （访问令牌）  
 **描述：**	可以发送给谷歌 API 的令牌。
 
 **字段：**	refresh_token （刷新令牌）  
-**描述：**	用于获得新的访问令牌的令牌。刷新令牌会一直有效直到用户对其废除访问权。该字段只有在授权码请求中的 access_type = offline 的时候才可能出现。
+**描述：**	用于获得新的访问令牌的令牌，对于本地安装的应用程序，该令牌默认已经包含，刷新令牌会一直有效直到用户对其废除访问权。
 
 **字段：**	expires_in （有效期）  
 **描述：**	访问令牌剩余的生命期。
 
 **字段：**	token_type （令牌类型）  
-**描述：**	确认返回的令牌类型。在这次示例中，这个字段总是会拥有值 Bearer。
+**描述：**	确认返回的令牌类型。目前，这个字段总是会拥有值 Bearer。
 
-----------
+ ----------
+
+> **注意**: 有时回应可能会包含其他字段，您的程序不应该将这种情况视为错误。上面示例中的集合是最小集。
 
 一个成功的回应会以 JSON 数组的形式发送回来，和下面的例子类似：
 
 	{
 	  "access_token":"1/fFAGRNJru1FTz70BzhT3Zg",
 	  "expires_in":3920,
-	  "token_type":"Bearer"
+	  "token_type":"Bearer",
+	  "refresh_token":"1/xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI"
 	}
-
-> **注意**: 有时回应可能会包含其他字段，您的程序不应该将这种情况视为错误。上面示例中的集合是最小集。
 
 ## 调用谷歌 API
 
@@ -223,55 +252,6 @@ https://www.googleapis.com/auth/plus.loginscope ，然后又向同一个用户�
 
 - 当您废除了一个代表组合认证的的令牌，其所有的认证都会被同时废除；这意味着如果你还保留着任何以往的权限的令牌，他们也会跟着失效。
 
-## 离线访问
-在某些情况下，你的应用程序可能需要在用户不在的时候访问谷歌 API。例如备份服务或者一些可以让博客的帖子可以在周一早上准时8点钟发布的应用程序。
-这种类型的访问被称作离线的，而 web 服务器应用程序可能会向用户要求离线访问权。反之，正常和默认的情况下访问被称作在线的。
-
-如果您的应用程序需要离线访问谷歌 API，那么在授权码的请求中就应该包含 access_type 参数，并将其值设定为 offline。离线访问请求的例子在下方，含有换行和空格来增强可读性：
-
-	https://accounts.google.com/o/oauth2/auth?
-	 scope=email%20profile&
-	 state=security_token%3D138r5719ru3e1%26url%3Dhttps://oa2cb.example.com/myHome&
-	 redirect_uri=https%3A%2F%2Foauth2-login-demo.appspot.com%2Fcode&
-	 response_type=code&
-	 client_id=812741506391.apps.googleusercontent.com&
-	 access_type=offline
-
-当目标用户的浏览器第一次被指向这串 URL 时，他们会看见用户准许页面。如果他们批准访问，那么回应中就会包含一个授权码，授权码可以用来交换获得一个访问令牌和一个刷新令牌。
-
-下面是授权码交换的示例：
-
-	POST /oauth2/v3/token HTTP/1.1
-	Host: www.googleapis.com
-	Content-Type: application/x-www-form-urlencoded
-
-	code=4/P7q7W91a-oMsCeLvIaQm6bTrgtp7&
-	client_id=8819981768.apps.googleusercontent.com&
-	client_secret={client_secret}&
-	redirect_uri=https://oauth2-login-demo.appspot.com/code&
-	grant_type=authorization_code
-
-如果这是应用程序第一次为用户进行授权码交换，那么回应中就会包含一个访问令牌和一个刷新令牌，如下例所示：
-
-	{
-	  "access_token":"1/fFAGRNJru1FTz70BzhT3Zg",
-	  "expires_in":3920,
-	  "token_type":"Bearer",
-	  "refresh_token":"1/xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI"
-	}
-
-> **Important**: 当您的应用程序获得一个刷新令牌时，将刷新令牌保存起来供未来使用时很重要的。因为一旦您的应用程序丢失了刷新令牌，它就只能重新向用户进行用户准许才能获得另一个刷新令牌了。如果你需要重新向用户进行用户准许，请在授权码请求里面包含 approval_prompt 参数，并将其值设定为 force。
-
-您的应用程序接收刷新令牌之后，就可以在任意时间获得新的访问令牌了。请参见[刷新令牌的相关章节](https://developers.google.com/identity/protocols/OAuth2WebServer#refresh) 来获得更多信息。
-
-下一次您的应用程序为同一个用户请求授权码时，用户不会再一次被要求同意准许了（假设他们以前已经同意了这次请求所包含的的域）。和预料的一样，回应会包含一个用于交换的授权码。不过，和第一次为用户交换授权码不一样，返回的内容中不会包括刷新令牌。下面是这类请求的一个示例；
-
-	{
-	  "access_token":"1/fFAGRNJru1FQd77BzhT3Zg",
-	  "expires_in":3920,
-	  "token_type":"Bearer",
-	}
-
 ### 使用刷新令牌
 
 和之前章节提到的一样，一个刷新令牌是在使用参数 access_type = offline 的第一次授权码交换中获得的。在这类情况下，您的应用程序可以通过发送刷新令牌到谷歌 OAuth 2.0 认证服务器来获得一个新的访问令牌。
@@ -316,22 +296,6 @@ https://www.googleapis.com/auth/plus.loginscope ，然后又向同一个用户�
 	}
 
 请注意刷新令牌的发放数量是有限制的；限制的单位是每一组客户端-用户，你应该在长期存储器中保存刷新令牌并一直使用它直到过期。如果您的应用程序请求太多刷新令牌，就可能会触发限制，这种情况下最旧的令牌会失效。
-
-### 废除令牌
-
-在某些情况下，一个用户也许会想要废除已经授予给应用程序的权限。用户可以用过访问以下 URL 来显式地废除权限
-[https://accounts.google.com/b/0/IssuedAuthSubTokens](https://accounts.google.com/b/0/IssuedAuthSubTokens)。
-同时，通过编程让应用程序自行废除已经获得的权限也是可能的。程序化废除工作在用户取消订阅或者卸载程序时是很重要的。换句话来说，卸载的过程可以包含一个 API 请求，用于确保废除被卸载的应用程序已经获得的权限。
-
-若想程序化废除令牌，您的应用程序需要向 https://accounts.google.com/o/oauth2/revoke 发送一个请求，并且将令牌作为参数发送出去：
-
-	curl https://accounts.google.com/o/oauth2/revoke?token={令牌}
-
-其中的“令牌”可以是访问令牌，也可以是刷新令牌。如果令牌是一个访问令牌，并且有成对的刷新令牌，那么所对应的刷新令牌也会被废除。
-
-如果废除工作被成功执行，那么回应的状态码会是 200。如果发生错误，回应的状态码会是 400，并且回应会包含一个错误码。
-
-**注意：** 在接收到废除工作成功的回应之后，可能需要隔一段时间废除才会完全生效。
 
 ## 客户端库
 
