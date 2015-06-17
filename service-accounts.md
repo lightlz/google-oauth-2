@@ -275,7 +275,7 @@ GoogleCredential credential = new GoogleCredential.Builder()
 
 当访问码的过了有效期，你的应用会生成另一个 JWT ，记下他，然后使用它来请求另一个访问码。
 
-![serviceaccount](images/serviceaccount.png)
+![serviceaccount](images/serviceaccounts.png)
 
 本章节余下内容包括如下：创建一个 JWT 的细节，记录 JWT ，格式化访问令牌请求，处理响应。
 
