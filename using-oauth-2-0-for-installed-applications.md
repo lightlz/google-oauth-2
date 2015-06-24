@@ -1,5 +1,15 @@
 # 在本地安装的应用程序上使用 OAuth 2.0
 
+**目录**
+
+- 概览
+- 为认证请求生成 URL
+- 处理回应并发出令牌请求
+- 调用谷歌 API
+- 渐进式授权
+- 使用刷新令牌
+- 客户端库
+
 谷歌 OAuth 2.0 端点支持各种平台上的应用程序，例如计算机、移动电话、平板等。本地安装的应用程序会被分发到每个独立的机器上，而且通常被认为不能用于保存 secret。这些应用程序可以在用户值守时，或者在后台运行时访问谷歌 API。
 
 如果您满足下述条件，那么这个文档就是为您准备的：
@@ -11,6 +21,8 @@
 
 如果您的应用程序运行在没有浏览器的设备上，或者输入性能受限（例如运行在家用游戏机、视频摄录机、打印机上的应用程序），那么请参照[在设备上使用 OAuth 2.0](https://developers.google.com/identity/protocols/OAuth2ForDevices)。
 
+![](/images/device-auth-decision-installedapp.png)
+
 ## 概览
 
 在这个工作流中，在本地安装的应用程序必须能使用浏览器，或者有嵌入式浏览器作为 web 视图。在本地安装的应用程序上的 OAuth 2.0 工作流如下：
@@ -19,6 +31,8 @@
 2. 和其他方案一样，谷歌会负责用户认证和用户准许（User consent），这一系列程序的结果是一个授权码。授权码会返回到浏览器的标题栏上或者作为一个查询串参数被返回，这取决于您的应用程序在请求中所发送的参数。
 3. 您的应用程序会进行授权码交换来获得访问令牌和刷新令牌。在交换过程中，应用程序会提交他的客户端 ID 和客户端 secret（这两者都是从开发者控制台获得的）。
 4. 您的应用程序会使用访问令牌来对谷歌 API 进行调用，应用程序也会储存刷新令牌以供未来使用。
+
+![](/images/webflow.png)
 
 这个工作流和[在 Web 服务器应用程序上使用 OAuth 2.0](https://developers.google.com/identity/protocols/OAuth2WebServer)的工作流比较类似，但有以下三点不同：
 
@@ -88,7 +102,8 @@
 	  client_id=812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com
 
 如果用户通过类似上述的 URL 进行登陆并且批准了访问权限，那么其结果会是类似下面这样的对话框：
-![Image](https://developers.google.com/accounts/images/installedresult.png)
+
+![](/images/installedresult.png)
 
 
 下面是另外一个示例 URL，包含换行和空格来加强可读性：
@@ -99,13 +114,13 @@
 	  response_type=code&
 	  client_id=812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com
 
-这两个 URL 的区别只有 redirect_uri 参数的值。第一个会让回应通过页面的标题返回授权码，而第二个则会使授权码作为查询串的一部分返回到http://localhost 地址。
+这两个 URL 的区别只有 `redirect_uri` 参数的值。第一个会让回应通过页面的标题返回授权码，而第二个则会使授权码作为查询串的一部分返回到 `http://localhost` 地址。
 
 ### 选择一个重定向 URI
 
-当您在[谷歌开发者控制台](https://console.developers.google.com/)中创建一个客户端 ID时，控制台会为您创建两个 redirect_uri （重定向 URI）：
+当您在[谷歌开发者控制台](https://console.developers.google.com/)中创建一个客户端 ID 时，控制台会为您创建两个 **redirect_uri** （重定向 URI）：
 
-urn:ietf:wg:oauth:2.0:oob 和 http://localhost
+**urn:ietf:wg:oauth:2.0:oob** 和 **http://localhost**
 
 您的应用程序所使用的参数值会决定授权码以何种方式传回。
 
@@ -125,7 +140,7 @@ urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 
 #### urn:ietf:wg:oauth:2.0:oob:auto
 
-该参数和 urn:ietf:wg:oauth:2.0:oob 是一致的，但返回的确认页面不会有文字提示用户手动复制授权码，取而代之的是要求用户关闭浏览器窗口。
+该参数和 `urn:ietf:wg:oauth:2.0:oob` 是一致的，但返回的确认页面不会有文字提示用户手动复制授权码，取而代之的是要求用户关闭浏览器窗口。
 
 在您的应用程序能读取 HTML 标题（例如，通过在桌面上检查窗口标题）获得授权码，但是却没法自动关闭页面的时候，这种方法就显得有用。
 
@@ -133,7 +148,7 @@ urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 
 初次认证请求的回应会包含一个授权码（密码），您的应用程序可以用授权码交换获得一个访问令牌和一个刷新令牌。
 
-若要发出这种令牌请求，您的应用程序应发送一个 HTTP POST 请求到 /oauth2/v3/token。并且包含以下参数：
+若要发出这种令牌请求，您的应用程序应发送一个 HTTP `POST` 请求到 `/oauth2/v3/token`。并且包含以下参数：
 
 ----------
 
@@ -199,7 +214,7 @@ urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 
 ## 调用谷歌 API
 
-您的程序获得访问令牌之后，您可以使用令牌以用户或者服务账户的名义来对谷歌 API 进行调用。要做到这一点，请将访问令牌包含到发给 API 的请求中，可以通过包含 access_token 查询参数或者一个 Authorization: Bearer HTTP 头来实现。如果可能的话，我们更欢迎 HTTP 头的方法，因为查询串更容易在服务器记录中可见。在大多数情况下你可以使用客户端库来设置您的谷歌 API 调用（例如，当对[谷歌人脉 API 进行调用时](https://developers.google.com/+/api/latest/people/get#examples)）。
+您的程序获得访问令牌之后，您可以使用令牌以用户或者服务账户的名义来对谷歌 API 进行调用。要做到这一点，请将访问令牌包含到发给 API 的请求中，可以通过包含 `access_token` 查询参数或者一个 `Authorization: Bearer` HTTP 头来实现。如果可能的话，我们更欢迎 HTTP 头的方法，因为查询串更容易在服务器记录中可见。在大多数情况下你可以使用客户端库来设置您的谷歌 API 调用（例如，当对[谷歌人脉 API 进行调用时](https://developers.google.com/+/api/latest/people/get#examples)）。
 
 你可以在[OAuth 2.0 游乐场](https://developers.google.com/oauthplayground/)中自行尝试所有的谷歌 API 并查看他们所对应的域。
 
@@ -209,13 +224,13 @@ urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 
 	GET https://www.googleapis.com/plus/v1/people/userId?access_token=1/fFBGRNJru1FQd44AzqT3Zg
 
-而对于已经认证的用户（me）而言，通过 Authorization: Bearer HTTP 头调用同样的 API 就会像下面这样：
+而对于已经认证的用户（me）而言，通过 `Authorization: Bearer` HTTP 头调用同样的 API 就会像下面这样：
 
 	GET /plus/v1/people/me HTTP/1.1
 	Authorization: Bearer 1/fFBGRNJru1FQd44AzqT3Zg
 	Host: googleapis.com
 
-您可以尝试 curl 命令行应用程序。下面是使用 HTTP 头的方法（推荐）的示例：
+您可以尝试 `curl` 命令行应用程序。下面是使用 HTTP 头的方法（推荐）的示例：
 
 	curl -H "Authorization: Bearer 1/fFBGRNJru1FQd44AzqT3Zg" https://www.googleapis.com/plus/v1/people/me
 
@@ -230,9 +245,9 @@ urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 
 按需请求资源访问权限通常被认为是一项最佳实践。举例来说，一个让人们可以对音乐进行采样并且创建混音的应用程序也许在登陆时候只需要非常少量的资源，说不定除了登陆者的名字之外就没别的了。但是，要保存一个完整的混音可能会需要访问他们的谷歌网盘。大多数人都会觉得在应用程序需要存储文件时申请谷歌网盘的访问权限是非常自然的。
 
-这种情况下，在登录时应用程序可以请求这个域：https://www.googleapis.com/auth/plus.loginto 来实现一个基本的社交登陆功能，然后在需要保存混音的时候才申请这个域：https://www.googleapis.com/auth/drive.file。
+这种情况下，在登录时应用程序可以请求这个域：`https://www.googleapis.com/auth/plus.loginto` 来实现一个基本的社交登陆功能，然后在需要保存混音的时候才申请这个域：`https://www.googleapis.com/auth/drive.file`。
 
-同时使用在[使用 OpenID 连接](https://developers.google.com/identity/protocols/OpenIDConnect)和[使用 OAuth 2.0 来访问谷歌 API](https://developers.google.com/accounts/docs/OAuth2) 里描述的步骤通常会让你的应用程序不得不管理两个不同的访问令牌。如果您希望避开这种复杂性，则需要在所有 OAuth 2.0 工作流的第一步时，将发送给 https://accounts.google.com/o/oauth2/auth 的认证 URI 里添加一个额外的参数。这个参数是 include_granted_scopes，其中值可以被赋为 true 或 false（默认值是 false），当这个值为 true 时，如果您的域认证要求被批准，谷歌认证服务器会将这次认证和所有之前已经成功的认证为这组用户-应用程序合并。这类请求的 URI 可能看上去会像下面这样（下例有插入换行和空格来增强可读性）：
+同时使用在[使用 OpenID 连接](https://developers.google.com/identity/protocols/OpenIDConnect)和[使用 OAuth 2.0 来访问谷歌 API](https://developers.google.com/accounts/docs/OAuth2) 里描述的步骤通常会让你的应用程序不得不管理两个不同的访问令牌。如果您希望避开这种复杂性，则需要在所有 OAuth 2.0 工作流的第一步时，将发送给 `https://accounts.google.com/o/oauth2/auth` 的认证 URI 里添加一个额外的参数。这个参数是 `include_granted_scopes`，其中值可以被赋为 `true` 或 `false`（默认值是 `false`），当这个值为 `true` 时，如果您的域认证要求被批准，谷歌认证服务器会将这次认证和所有之前已经成功的认证为这组用户-应用程序合并。这类请求的 URI 可能看上去会像下面这样（下例有插入换行和空格来增强可读性）：
 
 	https://accounts.google.com/o/oauth2/auth?
 	  scope=https://www.googleapis.com/auth/drive.file&
@@ -248,15 +263,13 @@ urn:ietf:wg:oauth:2.0:oob 和 http://localhost
 - 您可以使用刚才得到的访问令牌来访问任何在组合认证中已经合并的域。
 - 当您使用刷新令牌来进行组合认证时，返回的新访问令牌也代表了组合认证，所以也可以用于访问其任意域。
 - 组合认证包括了所有过去已经被许可的权限，即使这些权限请求曾经是从不同的客户端发出的。举例来说，如果您在桌面应用程序请求了
-https://www.googleapis.com/auth/plus.loginscope ，然后又向同一个用户的移动端发送了同样的请求，那么后面这个请求会被自动批准，因为组合认证会包含两边的域。
+`https://www.googleapis.com/auth/plus.loginscope` ，然后又向同一个用户的移动端发送了同样的请求，那么后面这个请求会被自动批准，因为组合认证会包含两边的域。
 
 - 当您废除了一个代表组合认证的的令牌，其所有的认证都会被同时废除；这意味着如果你还保留着任何以往的权限的令牌，他们也会跟着失效。
 
 ### 使用刷新令牌
 
-和之前章节提到的一样，一个刷新令牌是在使用参数 access_type = offline 的第一次授权码交换中获得的。在这类情况下，您的应用程序可以通过发送刷新令牌到谷歌 OAuth 2.0 认证服务器来获得一个新的访问令牌。
-
-若要通过这种方式获取访问令牌，您的应用程序应该发送一个 HTTPS POST 请求到 https://www.googleapis.com/oauth2/v3/token。
+若要获取访问令牌，您的应用程序应该发送一个 HTTPS `POST` 请求到 `https://www.googleapis.com/oauth2/v3/token`。
 并且请求必须包含以下参数：
 
 
