@@ -1,0 +1,7 @@
+{
+    "name": "Google OAuth 2.0 认证指南",
+    "introduction": "Google API 使用 OAuth 2.0 协议来进行验证和授权。谷歌支持常见的 OAuth 2.0 方案，包括使用 Web 服务器，本地安装的，和客户端类型的应用。",
+    "title": "Google OAuth 2.0 认证指南 - 极客学院 Wiki",
+    "keywords": "Google OAuth 2.0 认证教程,调用 Google API”,
+    "description": "Google API 使用 OAuth 2.0 协议来进行验证和授权。谷歌支持常见的 OAuth 2.0 方案，包括使用 Web 服务器，本地安装的，和客户端类型的应用。"
+}
