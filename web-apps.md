@@ -1,98 +1,92 @@
-# 在 Web 服务器应用程序上使用 OAuth 2.0
+# Web 服务器应用程序中使用 OAuth 2.0
 
-**目录**
+谷歌 OAuth 2.0 端点支持使用下列语言和框架编写的 Web 服务器应用程序：PHP，Java，Python，Ruby，和 ASP.NET。
+这些应用程序可能会在用户使用的时候或用户没在使用的时候访问谷歌 API。这种工作流需要应用程序有能力保存一个 secret。
 
-- 概览
-- 生成 URL
-- 处理回应
-- 调用谷歌 API
-- 渐进式授权
-- 离线访问
-- 客户端库
-
-谷歌 OAuth 2.0 端点支持使用下列语言和框架编写的web 服务器应用程序：PHP，Java，Python，Ruby，和 ASP.NET。
-这些应用程序可能会在用户使用的时候或用户没在使用的时候访问谷歌 API 。这种工作流需要应用程序有能力保存一个 secret。
-
-这个文档描述了如何从 web 服务器应用程序使用 OAuth 2.0 访问谷歌 API。 
+这个文档描述了如何从 Web 服务器应用程序使用 OAuth 2.0 访问谷歌 API。 
 
 ## 概览
 
 授权程序会在你的应用程序将一个浏览器重定向到一个谷歌 URL；[一个包含查询参数的 URL](https://developers.google.com/identity/protocols/OAuth2WebServer#formingtheurl) 显示出正在请求的访问类型。和其他情形一样，谷歌会处理用户认证，会话选择，用户准许（User consent）。这一程序的结果是授权码，谷歌会将授权码以查询串的形式返回给您的应用程序。
 
-接收到授权码之后，你的应用程序可以通过[密码交换](https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse) （同时也会进行客户端 ID 和客户端 secret 交换）来获得访问令牌,在某种情形下还会得到一个刷新令牌。
+接收到授权码之后，你的应用程序可以通过[密码交换](https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse)（同时也会进行客户端 ID 和客户端 secret 交换）来获得访问令牌,在某种情形下还会得到一个刷新令牌。
 
 应用程序可以使用访问令牌来[访问谷歌 API](https://developers.google.com/identity/protocols/OAuth2WebServer#callinganapi)。
 
 如果一个刷新令牌在授权码交换时存在，那么它可以在任何时候用来获取新的访问令牌。这叫做[离线访问](https://developers.google.com/identity/protocols/OAuth2WebServer#offline)，因为应用程序用这种方法取得新的访问令牌时不需要用户值守浏览器。
 
-![](/images/webflow.png)
+![](images/webflow.png)
 
 ## 生成 URL
 
-用于认证用户的 URL 是 [https://accounts.google.com/o/oauth2/auth](https://accounts.google.com/o/oauth2/auth) 。这个端点只能通过 SSL 访问，HTTP 连接会被拒绝。
+用于认证用户的 URL 是 `https://accounts.google.com/o/oauth2/auth`。这个端点只能通过 SSL 访问，HTTP 连接会被拒绝。
 
-----------
+
 
 **端点：**https://accounts.google.com/o/oauth2/auth  
 **描述：**这个端点是初次请求的目标。它负责处理寻找活动会话，认证用户和用户准许。当您的应用程序对该端点发送请求时，回应会包含一个访问令牌，一个刷新令牌，和一个授权码。
 
-----------
-
+--
 
 对于 web 服务器应用程序，谷歌认证服务器支持的查询串参数集为：
 
-----------
-
 **参数：**	response_type （响应类型）  
 **值：**	 code （密码）  
-**描述：**	决定 Google OAuth 2.0 端点是否要返回授权码。 对于 web 服务器应用程序，参数应该使用 code。
+**描述：**	决定 Google OAuth 2.0 端点是否要返回授权码。 对于 Web 服务器应用程序，参数应该使用 code。
 
+--
 
 **参数：**	client_id （客户端 ID）  
 **值：**	你从[开发者控制台](https://console.developers.google.com/)处获得的客户端 ID。  
 **描述：**	确定是哪个客户端正在发出请求。传过去的这个参数值必须要与[开发者控制台](https://console.developers.google.com/)里显示的完全一致。  
 
+--
 
 **参数：**	redirect_uri （重定向 URI）  
-**值：**	 在[开发者控制台](https://console.developers.google.com/)里列出的这个工程的 redirect_urivalues 其中一个值。  
+**值：**	在[开发者控制台](https://console.developers.google.com/)里列出的这个工程的 redirect_urivalues 其中一个值。  
 **描述：**	决定回应(Response)会发向哪里。这个参数的值必须和[谷歌开发者控制台](https://console.developers.google.com/)为这个工程所显示的值的其中一个完全一致（包括完整的 HTTP 或 HTTPS 格式、大小写、和末尾的'/'符号）。
  
- 
+--
+
 **参数：**	scope （域）   
-**值：**	用空格分隔的该应用程序所请求的权限集。  
+**值：**	用空格分隔该应用程序所请求的权限集。  
 **描述：**	确认您的应用程序请求的谷歌 API 访问权。传过去的参数值会以用户准许页面的方式向用户显示。请求的权限数量和获得用户准许的可能性有逆相关关系。若想了解可用的登陆域，请参见[登陆域](https://developers.google.com/+/api/oauth#login-scopes)。若想了解所有谷歌 API 的可用域，请访问 [API 浏览器](https://developers.google.com/apis-explorer/#p/)。基本上渐进地请求域是一项最佳实践，比起提前一次性请求所有权限，按需请求更好。举例来说，一个想要支持购买功能的应用程序应该在用户点击“购买”按钮的时候才要求谷歌钱包访问权; 详情参阅[渐进式授权](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth)。
  
- 
+--
+
 **参数：**	state （状态）  
 **值：**	任意字符串  
 **描述：**	当收到回应时提供任何可能对您的应用程序有用的状态。谷歌认证服务器会回传这个参数，所以您的应用程序会收到和它发出去一样的内容。若想防止跨站请求伪造攻击([CSRF](http://en.wikipedia.org/wiki/Cross-site_request_forgery)), 我们强烈推荐您在状态中包含防伪造令牌，并且在回应中进行确认。详情请参见[OpenID 连接](https://developers.google.com/identity/protocols/OpenIDConnect#createxsrftoken) 来获得实现这个功能的示例。
  
+--
  
 **参数：**	access_type （访问类型）  
 **值：**	online 或 offline（在线或离线）  
 **描述：**	表示当用户不在浏览器前时，您的应用程序是否需要访问谷歌 API。这个参数默认值是 online。如果您的应用程序需要在用户不在浏览器前的时候刷新访问令牌，那么请使用 offline，这样做会让您的应用程序在第一次为用户获取授权码的时候获得一个刷新令牌。
- 
+
+--
  
 **参数：**	approval_prompt （准许提示）  
 **值：**	force 或 auto （强制或自动）  
 **描述：**	决定用户是否应该再次进行用户准许。默认值是 auto（自动），表示用户只需要在第一次权限请求的时候看见用户许可页面。如果这个值是 force（强制），那么用户即使以前许可了您的应用程序的相关权限，也会再次见到用户许可页面。
  
- 
+--
+
 **参数：**	login_hint （登陆提示）  
-**值：**	电子邮箱地址 或 子标识符  
+**值：**	电子邮箱地址或子标识符  
 **描述：**	当您的应用程序知道哪个用户正在尝试进行认证时，可以提供这个参数作为对认证服务器的提示。将这个参数传过去会在登陆页面自动填写用户邮箱地址，或者选择适合的多用户登录会话，从而简化登陆工作流。
  
+-- 
+
 **参数：**	include_granted_scopes （包含已许可的域）  
 **值：**	true 或 false  
-**描述：**	如果这个参数值被设为 true，同时认证请求被许可，那么该次认证会许可所有 曾经许可给这组用户和应用程序的其他域；请参见[渐进式授权](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth)。
+**描述：**	如果这个参数值被设为 true，同时认证请求被许可，那么该次认证会许可所有曾经许可给这组用户和应用程序的其他域；请参见[渐进式授权](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth)。
  
-
-----------
-
+--
 
 下面是一串示例 URL。（包含换行和空格来加强可读性）
 
-	https://accounts.google.com/o/oauth2/auth?
+	 https://accounts.google.com/o/oauth2/auth?
 	 scope=email%20profile&
 	 state=security_token%3D138r5719ru3e1%26url%3Dhttps://oa2cb.example.com/myHome&
 	 redirect_uri=https%3A%2F%2Foauth2-login-demo.appspot.com%2Fcode&,
@@ -117,27 +111,31 @@
 
 服务器收到授权码后，它就能用授权码来交换一个访问令牌和一个刷新令牌。这种请求实际上是将一个 HTTPS `POST` 发送到 URL：`https://www.googleapis.com/oauth2/v3/token` ，其中包含以下参数:
 
-
-----------
-
 **字段：**	code （密码）  
 **描述：**	从初次请求获得的授权码
+
+--
 
 **字段：**	client_id （客户端 ID）  
 **描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 ID。
 
+--
+
 **字段：**	client_secret （客户端 secret）  
 **描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 secret。
 
+--
+
 **字段：**	redirect_uri （重定向 URI）  
 **描述：**	这个工程在[开发者控制台](https://console.developers.google.com/)处列出的重定向 URI 项之一。
+
+--
 
 **字段：**	grant_type （许可类型）  
 **描述：**	正如 OAuth 2.0 规格中定义的，这个字段必须包含 authorization_code 中的一个值。
  
 
-----------
-
+--
 
 实际请求可能会像下面这样：
 
@@ -153,22 +151,25 @@
 
 一个针对这个请求的成功的回应应该包含以下字段：
 
-
-----------
-
 **字段：**	access_token （访问令牌）  
 **描述：**	可以发送给谷歌 API 的令牌。
+
+--
 
 **字段：**	refresh_token （刷新令牌）  
 **描述：**	用于获得新的访问令牌的令牌。刷新令牌会一直有效直到用户对其废除访问权。该字段只有在授权码请求中的 access_type = offline 的时候才可能出现。
 
+--
+
 **字段：**	expires_in （有效期）  
 **描述：**	访问令牌剩余的生命期。
+
+--
 
 **字段：**	token_type （令牌类型）  
 **描述：**	确认返回的令牌类型。在这次示例中，这个字段总是会拥有值 Bearer。
 
-----------
+--
 
 一个成功的回应会以 JSON 数组的形式发送回来，和下面的例子类似：
 
@@ -229,6 +230,7 @@
 我们现在把上面这种认证叫做“组合认证”；关于组合认证：
 
 - 您可以使用刚才得到的访问令牌来访问任何在组合认证中已经合并的域。
+
 - 当您使用刷新令牌来进行组合认证时，返回的新访问令牌也代表了组合认证，所以也可以用于访问其任意域。
 - 组合认证包括了所有过去已经被许可的权限，即使这些权限请求曾经是从不同的客户端发出的。举例来说，如果您在桌面应用程序请求了
 `https://www.googleapis.com/auth/plus.loginscope` ，然后又向同一个用户的移动端发送了同样的请求，那么后面这个请求会被自动批准，因为组合认证会包含两边的域。
@@ -236,8 +238,9 @@
 - 当您废除了一个代表组合认证的的令牌，其所有的认证都会被同时废除；这意味着如果你还保留着任何以往的权限的令牌，他们也会跟着失效。
 
 ## 离线访问
+
 在某些情况下，你的应用程序可能需要在用户不在的时候访问谷歌 API。例如备份服务或者一些可以让博客的帖子可以在周一早上准时8点钟发布的应用程序。
-这种类型的访问被称作离线的，而 web 服务器应用程序可能会向用户要求离线访问权。反之，正常和默认的情况下访问被称作在线的。
+这种类型的访问被称作离线的，而 Web 服务器应用程序可能会向用户要求离线访问权。反之，正常和默认的情况下访问被称作在线的。
 
 如果您的应用程序需要离线访问谷歌 API，那么在授权码的请求中就应该包含 `access_type` 参数，并将其值设定为 `offline`。离线访问请求的例子在下方，含有换行和空格来增强可读性：
 
@@ -291,22 +294,25 @@
 若要通过这种方式获取访问令牌，您的应用程序应该发送一个 HTTPS `POST` 请求到 `https://www.googleapis.com/oauth2/v3/token`。
 并且请求必须包含以下参数：
 
-
-----------
-
 **字段：**	refresh_token （刷新令牌）  
 **描述：**	从授权码交换返回的刷新令牌
- 
+
+--
+
 **字段：**	client_id （客户端 ID）  
 **描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 ID。
+
+--
 
 **字段：**	client_secret （客户端 secret）  
 **描述：**	从[开发者控制台](https://console.developers.google.com/)处获得的客户端 secret。
 
+--
+
 **字段：**	grant_type （许可类型）  
 **描述：**	正如 OAuth 2.0 规格中定义的，这个字段必须包含 authorization_code 中的一个值。
 
-----------
+--
 
 这种请求如下例所示：
 
@@ -347,7 +353,7 @@
 
 ## 客户端库
 
-下面的客户端 库整合了一些流行的框架，让您更简单地应用 OAuth 2.0。随着时间的推移，会有更多的新功能添加到这些库中。
+下面的客户端库整合了一些流行的框架，让您更简单地应用 OAuth 2.0。随着时间的推移，会有更多的新功能添加到这些库中。
 
 - [谷歌 API 客户端库 for Java](https://developers.google.com/api-client-library/java/google-api-java-client/oauth2)
 - [谷歌 API 客户端库 for Python](https://developers.google.com/api-client-library/python/guide/aaa_oauth)
