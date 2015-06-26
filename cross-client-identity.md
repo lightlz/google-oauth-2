@@ -1,16 +1,16 @@
 # 跨客户端身份凭证
 
-当开发者构建软件时，会经常包含一些模块，例如，运行 web 服务的模块，依赖浏览器的模块，运行 native 移动应用的模块。开发人员和使用软件的人，通常认为这些模块应该是应用程序的一部分。
+当开发者构建软件时，会经常包含一些模块，例如，运行 Web 服务的模块，依赖浏览器的模块，运行 native 移动应用的模块。开发人员和使用软件的人，通常认为这些模块应该是应用程序的一部分。
 
-谷歌的 OAuth 2.0 支持这上述习惯。你必须在[谷歌开发者面板](https://console.developers.google.com/)中构建软件。[谷歌开发者面板](https://console.developers.google.com/)中的单位组织叫做 project，可以对应于一个多组件的应用程序。对每一个工程，你可以写上一些品牌信息，你必须指定应用程序将会访问的应用接口。开发者面板会生成一个独一无二的字符串 **client ID**，用来标志每一个多组件应用程序的控件。
+谷歌的 OAuth 2.0 支持上述习惯。你必须在[谷歌开发者面板](https://console.developers.google.com/)中构建软件。[谷歌开发者面板](https://console.developers.google.com/)中的单位组织叫做 project，可以对应于一个多组件的应用程序。对每一个工程，你可以写上一些品牌信息，你必须指定应用程序将会访问的应用接口。开发者面板会生成一个独一无二的字符串 **client ID**，用来标志每一个多组件应用程序的组件。
 
 ## 跨客户端授权的目标
 
 被一个或多个 `scope` 字符串标识的应用程序，当其使用 OAuth 2.0 授权时，它将代替用户来请求一个 OAuth 2.0 的访问令牌来访问资源。通常要由用户来批准应用程序的访问。
 
-当应用程序被用户授予特定 `scope` 内的访问权限时，用户会留意到用户同意（协议）界面，这个同意（协议）界面包含了你在[谷歌开发者面板](https://console.developers.google.com/)中构建的工程的版本号和产品品牌信息。（关于如何构建同意（协议）界面的更多信息，请查看在开发者控制面板的 [Setting up OAuth 2.0](https://developers.google.com/console/help/generating-oauth2) ）。因此，谷歌认为在一个项目中，当用户授权任何访问特定 `scope` 的 **client ID** 时,既表示用户信任整个 `scope` 的申请。
+当应用程序被用户授予特定 `scope` 内的访问权限时，用户会留意到用户准许界面，这个准许界面包含了你在[谷歌开发者面板](https://console.developers.google.com/)中构建的工程的版本号和产品品牌信息。（关于如何构建同意（协议）界面的更多信息，请查看在开发者控制面板的 [Setting up OAuth 2.0](https://developers.google.com/console/help/generating-oauth2) ）。因此，谷歌认为在一个项目中，当用户授权任何访问特定 `scope` 的 **client ID** 时,既表示用户信任整个 `scope` 的申请。
 
-效果就是，无论何时，当应用程序的组件被谷歌授权服务系统可靠地授权后，就不会多次提醒用户批准同一个应用访问资源。目前支持上诉效果的有 web 客户端, JavaScript 的客户端和 Android 应用程序。
+效果就是，无论何时，当应用程序的组件被谷歌授权服务系统可靠地授权后，就不会多次提醒用户批准同一个应用访问资源。目前支持上诉效果的有 Web 客户端, JavaScript 的客户端和 Android 应用程序。
 
 ### 跨客户端访问令牌
 
@@ -18,7 +18,7 @@
 
 幸运的是，无论何时，在同一个项目中给其他组件授权，谷歌授权服务系统都能够使用到与用户批准授权的，给定项目内的 client ID 的相关信息。
 
-效果就是，在同一个项目的同一个范围中，如果安卓应用请求了一个访问令牌，而且用户早就给 web 控件授权了，用户就不会被再次询问授权。如下途径也是适用的：在安卓应用上，如果访问的范围已经被授权过了，用户就不用再次授权 web 控件。
+效果就是，在同一个项目的同一个范围中，如果安卓应用请求了一个访问令牌，而且用户早就给 Web 组件授权了，用户就不会被再次询问授权。如下途径也是适用的：在安卓应用上，如果访问的范围已经被授权过了，用户就不用再次授权 Web 组件。
 
 ### 安卓 ID 令牌
 
@@ -26,49 +26,49 @@
 
 ### 例子
 
-假设开发者控制面板中有一个项目，这个项目包含了一个客户 ID 为 ```9414861317621.apps.googleusercontent.com``` 的服务端控件（一个应用程序）。 再假设在这个项目中还有一个原生安卓应用。
+假设开发者控制面板中有一个项目，这个项目包含了一个客户 ID 为 `9414861317621.apps.googleusercontent.com` 的服务端控件（一个应用程序）。 再假设在这个项目中还有一个原生安卓应用。
 
-这个安卓应用能够代替设备（手机）上任意一个谷歌账号调用 [GoogleAuthUtil.getToken()](http://developer.android.com/google/play-services/auth.html#obtain) 方法，调用时， `audience:server:client_id:` 这个前缀会通过 web 控件的客户 ID 来进行修正补全，也就是 `scope` 参数设置为 `audience:server:client_id:9414861317621.apps.googleusercontent.com` 。
+这个安卓应用能够代替设备（手机）上任意一个谷歌账号调用 [GoogleAuthUtil.getToken()](http://developer.android.com/google/play-services/auth.html#obtain) 方法，调用时， `audience:server:client_id:` 这个前缀会通过 Web 组件的客户 ID 来进行修正补全，也就是 `scope` 参数设置为 `audience:server:client_id:9414861317621.apps.googleusercontent.com` 。
 
-在这个方案中， `GoogleAuthUtil` 这个对象将会察觉到在同一个项目中的安卓应用和 web 控件的客户 ID ，不用用户同意，就可以提供谷歌验证过的 ID 令牌给应用。
+在这个方案中，`GoogleAuthUtil` 这个对象将会察觉到在同一个项目中的安卓应用和 Web 组件的客户 ID ，不用用户同意，就可以提供谷歌验证过的 ID 令牌给应用。
 这个 ID 令牌包含了 [一些字段](https://developers.google.com/identity/protocols/OpenIDConnect#obtainuserinfo)，其中一些比较重要的字段如下：
 
 * `iss` : 总是 `accounts.google.com`
 
-* `aud` : 项目中 web 控件的客户 ID 
+* `aud` : 项目中 Web 组件的客户 ID 
 
 * `azp` : 项目中安卓应用的客户 ID
 
 * `email` : 用来标识用户请求令牌的电子邮件
 
-ID 令牌被设计成通过 HTTPS 传输，所以使用 web 控件必须按如下步骤进行：
+ID 令牌被设计成通过 HTTPS 传输，所以使用 web 组件必须按如下步骤进行：
 
-1. 验证加密签名。因为令牌的形式是一个 JSON web 令牌或者是 JWT ，并且还有大多数流行的编程语言库来验证 JWT ,这是简单而有效的。
+1. 验证加密签名。因为令牌的形式是一个 JSON Web 令牌或者是 JWT，并且还有大多数流行的编程语言库来验证 JWT，这是简单而有效的。
 
-2. 确保 `aud` 字段的值是属于你自己的客户 ID 。
+2. 确保 `aud` 字段的值是属于你自己的客户 ID。
 
-完成相关操作后， web 控件的令牌就有下列必然的特征：
+完成相关操作后， web 组件的令牌就有下列必然的特征：
 
 1. 令牌是通过谷歌发布的。
 
 2. 令牌被放置在 `email` 字段，然后发送到设备。
 
-web 控件可以通过安卓应用程序鉴定放置在 `azp` 字段的客户 ID。然而非兼容的或者高权限的安卓设备或许会伪造 `azp` 字段。
+Web 组件可以通过安卓应用程序鉴定放置在 `azp` 字段的客户 ID。然而非兼容的或者高权限的安卓设备或许会伪造 `azp` 字段。
 
-效果就是，web 控件把来自安卓客户端的数据当做来自项目中的用户的数据，使用 ID 令牌来代替用户来访问和更新用户数据，而不用多次敦促用户进行身份验证。
+效果就是，Web 组件把来自安卓客户端的数据当做来自项目中的用户的数据，使用 ID 令牌来代替用户来访问和更新用户数据，而不用多次提醒用户进行身份验证。
 
-### 安卓应用的 web 端获得离线访问权限
+### 安卓应用的 Web 端获得离线访问权限
 
-再次假设一个包含了客户 ID 为 `9414861317621.apps.googleusercontent.com` 的 web 控件，在这个事例中想代替用户访问两个不同的资源，但此时用户并不在线。然而，软件访问资源通常是通过一个安卓应用的交互来实现的。让我们更深入地假设，资源是被 [Google Drive scope](https://developers.google.com/drive/web/scopes) 内的字符串 `https://www.googleapis.com/auth/drive.file` 和 [Google+ scope](https://developers.google.com/+/api/oauth#scopes) 内的登陆字符串 `https://www.googleapis.com/auth/plus.login` 标志的，我们将上述两个字符串标记为 `resource-1` 和 `resource-2`。
+再次假设一个包含了客户 ID 为 `9414861317621.apps.googleusercontent.com` 的 Web 组件，在这个事例中想代替用户访问两个不同的资源，但此时用户并不在线。然而，软件访问资源通常是通过一个安卓应用的交互来实现的。让我们更深入地假设，资源是被 [Google Drive scope](https://developers.google.com/drive/web/scopes) 内的字符串 `https://www.googleapis.com/auth/drive.file` 和 [Google+ scope](https://developers.google.com/+/api/oauth#scopes) 内的登陆字符串 `https://www.googleapis.com/auth/plus.login` 标志的，我们将上述两个字符串标记为 `resource-1` 和 `resource-2`。
 
-在这个场景中，安卓应用就像是在开发者面板项目中的 web 控件那样，在设备上指定的任何的谷歌账户，都能够调用 [GoogleAuthUtil.getToken()](http://developer.android.com/google/play-services/auth.html#obtain) 方法，其 `scope` 参数的之为 oauth2:server:client_id:`9414861317621.apps.googleusercontent.com:api_scope:resource-1 resource-2.`。
+在这个场景中，安卓应用就像是在开发者面板项目中的 web 组件那样，在设备上指定的任何的谷歌账户，都能够调用 [GoogleAuthUtil.getToken()](http://developer.android.com/google/play-services/auth.html#obtain) 方法，其 `scope` 参数的之为 oauth2:server:client_id:`9414861317621.apps.googleusercontent.com:api_scope:resource-1 resource-2.`。
 
 在这个案例中，用户已经授权这个项目访问前面所说的那两个范围， `GoogleAuthUtil.getToken()`  方法将首次请求那两个范围的令牌。如果他可以这么做，那么这个方法并不会返回
  OAuth 令牌，但是会放回一个临时的授权令牌，用来更新访问令牌和刷新令牌。
 
-安卓应用能通过 HTTPS 来发送授权码给自己的 web 控件。web 控件可以这个授权令牌返回访问令牌和刷新令牌，在 [Handling the response](https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse) 中有相关描述。以下规则适用于 web 组件:
+安卓应用能通过 HTTPS 来发送授权码给自己的 web 组件。web 组件可以这个授权令牌返回访问令牌和刷新令牌，在 [Handling the response](https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse) 中有相关描述。以下规则适用于 web 组件:
 
-* 当 web 组件通过授权码交换令牌时，在 `POST` 请求中不应该包含 `redirect_uri`  参数。
+* 当 web 组件通过授权码交换令牌时，在 `POST` 请求中不应该包含 `redirect_uri` 参数。
 
 * 当 web 组件接收到令牌时，必须检查 ID 令牌。接受来自谷歌安全通道的令牌，但是请求中并不含有签名检查。所以 web 组件还必须作如下操作：
 
@@ -90,7 +90,7 @@ web 控件可以通过安卓应用程序鉴定放置在 `azp` 字段的客户 ID
 
 2. 会话的首次请求，不论它是否拥有在线访问必要范围的适当等级，通常都会有查询后端对其进行校验。
 
-3. web 后端必须知道他是否拥有一个有效的刷新令牌。如果它没有刷新令牌或者发现了它的刷新令牌已经失效（你可以使用刷新令牌来获取新的访问令牌来测试其是否失效）， web 后端就会传递缺少刷新令牌的信息给客户端。
+3. web 后端必须知道他是否拥有一个有效的刷新令牌。如果它没有刷新令牌或者发现了它的刷新令牌已经失效（你可以使用刷新令牌来获取新的访问令牌来测试其是否失效），web 后端就会传递缺少刷新令牌的信息给客户端。
 
 4. 如果客户端接收到了来自后端的信息，得知了后端没有有效的刷新令牌。在安卓应用获取了授权令牌，就像前面说的那样，会将这个授权令牌传送回 web 后端来获取有效的刷新令牌。
 
@@ -98,4 +98,4 @@ web 控件可以通过安卓应用程序鉴定放置在 `azp` 字段的客户 ID
 
 在这些步骤中，控制请求离线访问的功能是通过服务端的代码来维护的，最好能够知道什么时候需要离线访问。并且，如果应用总是请求刷新令牌，却不去检查服务端是否已经拥有了刷新令牌，这将导致有限的刷新令牌被消耗，这反倒可以突出用户/应用程序组合是优秀的。
 
-上诉效果就是，用户只要非常少的确认，就可以让项目的移动应用的组件，为其他组件取得用来获取永久的访问离线资源的权限.
+上诉效果就是，用户只要经过少数的确认，就可以让项目的移动应用的组件，为其他组件取得永久的访问离线资源的权限.
