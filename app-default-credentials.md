@@ -14,15 +14,15 @@
 
 * 为避免在应用程序代码中嵌入的鉴定信息。通常一个最佳使用方式是，以避免包含密钥认证的相关源代码，如测试和生产时，需要在不同的上下文中使用不同的凭证。使用环境变量，在应用程序外可以定义凭证。
 
-* 正在访问的应用接口，其中的数据是关联到一个云项目或整个应用程序的,而不是个人用户数据。所以最好使用一个认证流程，最终用户明确同意访问（查看 [使用 OAuth 2.0 访问谷歌应用接口](https://developers.google.com/identity/protocols/OAuth2)）。
+* 正在访问的应用接口，其中的数据是关联到一个云项目或整个应用程序的，而不是个人用户数据。所以最好使用一个认证流程，最终用户明确同意访问（查看 [使用 OAuth 2.0 访问谷歌应用接口](https://developers.google.com/identity/protocols/OAuth2)）。
 
 ### 应用程序的默认凭证如何工作
 
 通过调用客户端代码库，你可以获取到应用程序的默认凭证。返回的凭证是由环境中运行的代码决定的。按照以下顺序进行检查:
 
-1. 检测环境变量 GOOGLE_APPLICATION_CREDENTIALS 。如果环境变量是规定的，它应该指明了定义凭证的文件。通过这个简单的方法可以获取到凭证，其目的是使用 [谷歌开发者面板](https://console.developers.google.com/) 的 **APIs & Auth** 选项中的子选项 **Credentials** 来创建一个服务帐户。创建一个服务账号或者选择一个现存的，选中 **Generate new JSON key** 选项。为下载的 JSON 文件设置环境变量。
+1. 检测环境变量 GOOGLE_APPLICATION_CREDENTIALS。如果环境变量是规定的，它应该指明了定义凭证的文件。通过这个简单的方法可以获取到凭证，其目的是使用 [谷歌开发者面板](https://console.developers.google.com/) 的 **APIs & Auth** 选项中的子选项 **Credentials** 来创建一个服务帐户。创建一个服务账号或者选择一个现存的，选中 **Generate new JSON key** 选项。为下载的 JSON 文件设置环境变量。
 
-2. 如果你在你的设备上安装了谷歌云 SDK ，需要运行命令 [`gcloud auth login`](https://cloud.google.com/sdk/gcloud/reference/auth/login) ，你的身份可以用作代理，从那台机器测试代码调用应用接口。
+2. 如果你在你的设备上安装了谷歌云 SDK，需要运行命令 [`gcloud auth login`](https://cloud.google.com/sdk/gcloud/reference/auth/login)，你的身份可以用作代理，从那台机器测试代码调用应用接口。
 
 3. 如果你的应用程序时运行在谷歌应用引擎上的，内置的服务账号要关联到应用程序。
 
@@ -32,7 +32,7 @@
 
 ### 在应用程序代码中调用应用程序的默认凭证
 
-默认凭证被集成在谷歌应用接口客户端库中。支持的环境有安装在 Linux ， Windows 和 Mac OS 上的应用，以及 GCE 虚拟机。
+默认凭证被集成在谷歌应用接口客户端库中。支持的环境有安装在 Linux，Windows 和 Mac OS 上的应用，以及 GCE（Google Compute Engine ）虚拟机。
 
 #### Java
 
@@ -53,7 +53,7 @@ Compute compute = new Compute.Builder
     (transport, jsonFactory, credential).build();
 ```
 
-一些凭证类型向你请求某些范围，但是服务实体入口点并不受理。如果你偶尔遭遇了这个情节，就像下面所做的那样，你需要注入范围：
+一些凭证类型向你请求某些 scopes，但是服务实体入口点并不受理。如果你偶尔遭遇了这个情节，就像下面所做的那样，你需要注入 scopes：
 
 ```
 Collection COMPUTE_SCOPES =
@@ -96,9 +96,7 @@ service = build('compute', 'v1', credentials=credentials)
 
 这是最快速便捷地在本地校验代码的方法。有一点需要注意，你的个人身份凭证通常有很多的权限，所以你该找一个场景，这个场景是一个应用接口在本地被调用而不是在发布之后被调用。它只能在谷歌云应用接口许可范围内工作。如果这个方法引发了问题，考虑下载服务账号密钥来设置环境变量 [environment variable](https://developers.google.com/identity/protocols/application-default-credentials#howtheywork) 。
 
-#### Google App Engine SDK
-
-谷歌应用引擎 SDK
+#### 谷歌应用引擎 SDK
 
 自谷歌应用引擎SDK 1.9.18 以来，当在本地运行开发用应用程序服务，可以使用应用程序的默认凭证。注意，这个仅仅支持通过使用命令 [`gcloud preview app run`](https://cloud.google.com/sdk/gcloud/reference/preview/app/run) 来完成上诉效果，不支持在老旧的特定语言的开发服务器。
 
@@ -110,12 +108,12 @@ service = build('compute', 'v1', credentials=credentials)
 
 使用应用程序的默认凭证的代码，可以像用户或者服务账号那样的身份凭证运行，包括内置的服务账号的身份凭证。如果使用了一个以上的身份凭证，他们必须都有权限调用。配置权限，请打开[谷歌开发者面板](https://console.developers.google.com/)的 **Permissions** 选项。
 
-#### 范围
+#### 域 （Scopes）
 
-他们采取 uri 的形式,名字一组给定的 API 的功能， OAuth2 的权限范围的定义是在一个给定的上下文中，可被调用的应用接口。他们采取 uri 的形式,为给定的应用接口命名,例如， "https://www.googleapis.com/auth/compute.readonly"。不同类型的身份凭证处理不同的范围。
+他们采取 URI 的形式，名字一组给定的 API 的功能，OAuth2 的权限 scope 的定义是在一个给定的上下文中，可被调用的应用接口。他们采取 URI 的形式，为给定的应用接口命名，例如，"https://www.googleapis.com/auth/compute.readonly"。不同类型的身份凭证处理不同的 scope。
 
-下载的服务账号的密钥和谷歌应用引擎内建的服务账号，其范围必须在代码中指定。 应用接口的封装或许该这么做，但是在使用这个证书时，会出错。获取更多信息如何在你的代码中注入范围，请查看 [Calling the Application Default Credentials in application code](https://developers.google.com/identity/protocols/application-default-credentials#calling)。
+下载的服务账号的密钥和谷歌应用引擎内建的服务账号，其 scope 必须在代码中指定。应用接口的封装或许该这么做，但是在使用这个证书时，会出错。获取更多信息如何在你的代码中注入 scope，请查看 [Calling the Application Default Credentials in application code](https://developers.google.com/identity/protocols/application-default-credentials#calling)。
 
 谷歌计算引擎虚拟机的服务账号，其支持的范围必须在虚拟机创建时指定。如果使用谷歌云 SDK ，就要使用命令 [`gcloud compute instances create`](https://cloud.google.com/sdk/gcloud/reference/compute/instances/create) 以及指定 **--scopes** 参数来完成。
 
-如果使用谷歌云 SDK 的命令 [`gcloud auth login`](https://cloud.google.com/sdk/gcloud/reference/auth/login) ，在本地提供自己的身份凭证，范围就会被固定，即使范围包含了所有的谷歌云应用接口的范围。如果你需要不在这里谈及的范围，建议你下载服务中的密钥。
+如果使用谷歌云 SDK 的命令 [`gcloud auth login`](https://cloud.google.com/sdk/gcloud/reference/auth/login) ，在本地提供自己的身份凭证，scope 就会被固定，即使 scope 包含了所有的谷歌云应用接口的范围。如果你需要不在这里谈及的 scope，建议你下载服务中的密钥。
